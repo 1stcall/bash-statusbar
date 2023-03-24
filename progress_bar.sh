@@ -1,21 +1,48 @@
 #!/usr/bin/env bash
-
-trap clear_progress EXIT
-init_progress=0 # progress bar has not been initialised
-
+#
+set -o errexit
+set -o errtrace
+set -o functrace
+set -o nounset
+set -o pipefail
+set -o noclobber
+#
+# Function for basic logging to stderr
+#
+log(){
+  printf  "${LBLUE}%s:${RESTORE} %s\n" $SCRIPTNAME "${*}" 1>&2
+}
+#
+# Finction to format seconds in days, hours, mins & seconds
+#
+function displaytime {
+  local T="${1}"
+  local D=$((T/60/60/24))
+  local H=$((T/60/60%24))
+  local M=$((T/60%60))
+  local S=$((T%60))
+  (( $D > 0 )) && printf '%d days ' $D
+  (( $H > 0 )) && printf '%d hours ' $H
+  (( $M > 0 )) && printf '%d minutes ' $M
+  (( $D > 0 || $H > 0 || $M > 0 )) && printf 'and '
+  printf '%d seconds\n' $S
+}
+#
+# Function to initialise the progress bar
+#
 function initialise_progress()
 {
-    local counter
+    local counter                                               # counter variable
 
     # go to last line and print the empty progress bar
-    tput sc                                                     #save the current cursor position
+    tput sc                                                     # save the current cursor position
     tput cup $((`tput lines`-1)) 2                              # go to last line
     echo -n "["                                                 # print the start of the progress bar line
     tput cup $((`tput lines`-1)) $((`tput cols`-7))             # move to the end of the progress bar line
     echo -n "]"                                                 # print the end of the progress bar line
     tput rc                                                     # bring the cursor back to the last saved position
     tput civis                                                  # hide the cursor
-    init_progress=1                                               # progress bar has been initialised
+    init_progress=1                                             # progress bar has been initialised
 }
 
 function clear_progress()
@@ -78,6 +105,22 @@ function display_progress()
     fi
 
 }
+#
+# initialise constants and variables
+#
+SECONDS=0                                                       # initialise the timer
+VERSION="0.1.1 dev"                                             # initialise the script version
+init_progress=0                                                 # progress bar has not been initialised
+LBLUE=$(echo -en '\033[01;34m')                                 # font colour light blue
+RESTORE=$(echo -en '\033[0m')                                   # restore font color
+SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" # initialise the script path
+SCRIPTFILE=$(basename -- "${0}")                                # initialise the script filename
+SCRIPTNAME=${SCRIPTFILE%.*}                                     # initialise the script name
+#
+log "Running: $SCRIPTNAME version: $VERSION"
+#
+trap clear_progress EXIT                                        # clear the progress bar on exit
+#
 # the actual loop which does the script's main job
 for counter in {1..50}; do
     # this is just to show that the cursor is behaving correctly
@@ -85,3 +128,5 @@ for counter in {1..50}; do
     printf "x%dx\n" $counter
     display_progress $counter 50
 done
+#
+log "$SCRIPTNAME $VERSION completed in $(displaytime $SECONDS)"
