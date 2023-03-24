@@ -16,22 +16,25 @@ log(){
 # Function to format seconds in days, hours, mins & seconds
 #
 function displaytime {
-  local T="${1}"
-  local D=$((T/60/60/24))                                   # calculate days from seconds
-  local H=$((T/60/60%24))                                   # calculate hours from seconds
-  local M=$((T/60%60))                                      # calculate minutes from seconds
-  local S=$((T%60))                                         # calculate remaining from seconds
-  (( D > 0 )) && printf '%d days ' $D                      # output days if needed
-  (( H > 0 )) && printf '%d hours ' $H                     # output hours if needed
-  (( M > 0 )) && printf '%d minutes ' $M                   # output minuets if needed
-  (( D > 0 || H > 0 || M > 0 )) && printf 'and '         # output "and" if days, hours or minutes are used
-  printf '%d seconds\n' $S                                  # output seconds
-  return 0
+    local T="${1}"
+    local D=$((T/60/60/24))                                   # calculate days from seconds
+    local H=$((T/60/60%24))                                   # calculate hours from seconds
+    local M=$((T/60%60))                                      # calculate minutes from seconds
+    local S=$((T%60))                                         # calculate remaining from seconds
+    (( D > 0 )) && printf '%d days ' $D                      # output days if needed
+    (( H > 0 )) && printf '%d hours ' $H                     # output hours if needed
+    (( M > 0 )) && printf '%d minutes ' $M                   # output minuets if needed
+    (( D > 0 || H > 0 || M > 0 )) && printf 'and '         # output "and" if days, hours or minutes are used
+    printf '%d seconds\n' $S                                  # output seconds
+    return 0
 }
 #
 # Function to initialise the progress bar
 #
 function initialise_progress {
+    trap clear_progress SIGHUP SIGINT SIGQUIT SIGABRT         # clear the progress bar on exit
+#    trap clear_progress SIGINT                                      # clear the progress bar on CTRL+C
+#    trap clear_progress SIGERROR                                      # clear the progress bar on error
     #
     # go to last line and print the empty progress bar
     #
@@ -50,18 +53,24 @@ function initialise_progress {
 #
 # shellcheck disable=SC2317  # Don't warn about unreachable commands in this function
 function clear_progress {
+    trap clear_progress SIGHUP SIGINT SIGQUIT SIGABRT         # clear the progress bar on exit
     tput sc                                                     # save the current cursor position
     tput cup $(($(tput lines)-1)) 0                              # go to the line with the progress bar
     tput el                                                     # clear the current line
     tput rc                                                     # go back to the saved cursor position
     tput cnorm                                                  # restore the cursor
     init_progress=0                                             # progress bar is uninitialised
+    trap - SIGHUP SIGINT SIGQUIT SIGABRT
+#    trap - EXIT
+#    trap - SIGINT
+#    trap - SIGERROR
     return 0
 }
 #
 # Function to display the current progress.  TODO break up function
 #
 function display_progress {
+    trap clear_progress SIGHUP SIGINT SIGQUIT SIGABRT         # clear the progress bar on exit
     local counter                                               # counter used in loops
     #
     [[ init_progress -ne 1 ]] && initialise_progress            # initialise the progress bar if needed
@@ -117,7 +126,6 @@ function display_progress {
 # test code. ########################################################################################################
 #
 function selftest {
-    trap clear_progress EXIT                                        # clear the progress bar on exit
     #
     # the actual loop which does the script's main job
     #
@@ -126,13 +134,12 @@ function selftest {
         printf "x%dx\n" "$counter"
         display_progress "$counter" "${1:-50}"
     done
-    trap - EXIT
 }
 #
 # initialise constants and variables
 #
 SECONDS=0                                                       # initialise the timer
-VERSION="1.1.0-dev"                                             # initialise the script version
+VERSION="1.0.1-dev"                                             # initialise the script version
 init_progress=0                                                 # progress bar has not been initialised
 LBLUE=$(echo -en '\033[01;34m')                                 # font colour light blue
 RESTORE=$(echo -en '\033[0m')                                   # restore font color
