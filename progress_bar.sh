@@ -115,6 +115,20 @@ function display_progress {
 }
 #
 # test code. ########################################################################################################
+#
+function selftest {
+    trap clear_progress EXIT                                        # clear the progress bar on exit
+    #
+    # the actual loop which does the script's main job
+    #
+    for counter in $(seq 1 "${1:-50}"); do
+        # this is just to show that the cursor is behaving correctly
+        printf "x%dx\n" "$counter"
+        display_progress "$counter" "${1:-50}"
+    done
+    trap - EXIT
+}
+#
 # initialise constants and variables
 #
 SECONDS=0                                                       # initialise the timer
@@ -123,20 +137,12 @@ init_progress=0                                                 # progress bar h
 LBLUE=$(echo -en '\033[01;34m')                                 # font colour light blue
 RESTORE=$(echo -en '\033[0m')                                   # restore font color
 #SCRIPTPATH="$( cd -- "$(dirname "$0")" >/dev/null 2>&1 ; pwd -P )" # initialise the script path
-SCRIPTFILE=$(basename -- "${0}")                                # initialise the script filename
+SCRIPTFILE=$( basename "${BASH_SOURCE[0]}" )                    # initialise the script filename
 SCRIPTNAME=${SCRIPTFILE%.*}                                     # initialise the script name
 #
-log "Running: $SCRIPTNAME version: $VERSION"
+if [[ $SCRIPTFILE == $( basename "${0#-}" ) ]]; then
+    log "Running: $SCRIPTNAME version: $VERSION"
+    selftest "${1:-50}"
+    exit $?
+fi
 #
-trap clear_progress EXIT                                        # clear the progress bar on exit
-#
-# the actual loop which does the script's main job
-#
-for counter in {1..500}; do
-    # this is just to show that the cursor is behaving correctly
-    printf "x%dx\n" "$counter"
-    display_progress "$counter" 500
-done
-#
-log "$SCRIPTNAME $VERSION completed in $(displaytime $SECONDS)"
-exit 0
