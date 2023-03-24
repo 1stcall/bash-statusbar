@@ -109,7 +109,7 @@ function display_progress()
 # initialise constants and variables
 #
 SECONDS=0                                                       # initialise the timer
-VERSION="0.1.1 dev"                                             # initialise the script version
+VERSION="1.1.0 dev"                                             # initialise the script version
 init_progress=0                                                 # progress bar has not been initialised
 LBLUE=$(echo -en '\033[01;34m')                                 # font colour light blue
 RESTORE=$(echo -en '\033[0m')                                   # restore font color
